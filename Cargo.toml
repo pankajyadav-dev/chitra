@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/chitra", "libs/clap_lib", "libs/treesitter_lib"]
+members = ["apps/chitra", "libs/clap_lib", "libs/ctx_lib", "libs/treesitter_lib"]
 
 
 [workspace.package]
