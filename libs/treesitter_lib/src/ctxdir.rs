@@ -1,6 +1,6 @@
 use anyhow::{Context, Error};
 use directories::ProjectDirs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use tracing::info;
 
@@ -19,7 +19,12 @@ pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
     Ok(parser_dir)
 }
 
-pub async fn download_ctx_parser(language: &str, target_dir: &PathBuf) -> Result<PathBuf, Error> {
+pub async fn download_ctx_parser<P: AsRef<Path>>(
+    language: &str,
+    target_dir: P,
+) -> Result<PathBuf, Error> {
+    let target_dir = target_dir.as_ref();
+
     let extension = if cfg!(target_os = "windows") {
         "dll"
     } else if cfg!(target_os = "macos") {

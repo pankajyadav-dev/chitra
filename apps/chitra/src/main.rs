@@ -1,13 +1,10 @@
 use anyhow::{Error, Result};
 use clap::Parser;
 use clap_lib::{Cli, config::Command};
-use std::path::PathBuf;
-//use tokio::fs;
-use tracing::info;
-use treesitter_lib::get_ctx_parser_dir;
+use ctx_lib::chitra::init_chitra;
 use std::env;
-use ctx_lib::chitra::check_chitra_dir;
-//use anyhow::Context; 
+use std::path::PathBuf;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -22,12 +19,14 @@ async fn main() -> Result<(), Error> {
                 None => PathBuf::from("."),
             };
             info!("Dir path {:?}", dir_path);
-            let root_ctx = check_chitra_dir(&dir_path).await;
-            info!("the root_ctx path {:?}",Some(root_ctx));
-            let ctx_dir_path = env::current_dir()?;
-            info!("The current dir in which the programm is running {:?}",ctx_dir_path);
-            let ctx_parser_dir = get_ctx_parser_dir().await?;
-            info!("Ctx parser dir: {:?}", ctx_parser_dir);
+            let root_dir_path = env::current_dir()?;
+            let ctx_dir_path = root_dir_path.join(dir_path);
+            info!(
+                "The current dir in which the programm is running {:?}",
+                ctx_dir_path
+            );
+            init_chitra(ctx_dir_path).await?;
+            info!(".chitra is init completed successfully");
         }
         Command::Index { path } => {
             info!("Index command trigger {:?}", path);
