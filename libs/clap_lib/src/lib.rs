@@ -1,12 +1,12 @@
+pub mod config;
 use clap::Parser;
+use config::Command;
 
-
-
-#[derive(Parser)]
+#[derive(Parser,Debug)]
 #[command(name = "chitra")] 
 #[command(bin_name = "ctx")] 
 #[command(about = "Context Optimization CLI")]
 pub struct Cli {
-    pub cmd: String,
-    pub path: std::path::PathBuf,
+    #[command(subcommand)]
+    pub cmd: Command,
 }

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/chitra", "libs/clap_lib"]
+members = ["apps/chitra", "libs/clap_lib", "libs/treesitter_lib"]
 
 
 [workspace.package]
@@ -13,3 +13,11 @@ clap = {version = "4.6.0", features = ["derive"]}
 anyhow = "1.0.102"
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
+tokio = { version = "1.50.0", features = ["full"] }
+directories = "6.0.0"
+reqwest = "0.13.2"
+
+
+#Library
+clap_lib = { version = "0.1.0", path = "libs/clap_lib" }
+treesitter_lib = { version = "0.1.0", path = "libs/treesitter_lib" }

@@ -1,0 +1,13 @@
+[package]
+name = "treesitter_lib"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+directories.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
