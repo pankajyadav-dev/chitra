@@ -13,7 +13,7 @@ pub async fn init_chitra<P: AsRef<Path>>(curr_dir: P) -> Result<(), Error> {
     Ok(())
 }
 
-async fn check_chitra_dir<P: AsRef<Path>>(curr_dir: P) -> Option<PathBuf> {
+pub async fn check_chitra_dir<P: AsRef<Path>>(curr_dir: P) -> Option<PathBuf> {
     let curr_dir = curr_dir.as_ref();
     for ancestor in curr_dir.ancestors() {
         let target_dir = ancestor.join(".chitra");
