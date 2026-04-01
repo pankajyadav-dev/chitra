@@ -2,7 +2,7 @@ use anyhow::{Error, Result};
 use clap::Parser;
 use clap_lib::{Cli, config::Command};
 use ctx_lib::chitra::{check_chitra_dir, init_chitra};
-use ctx_lib::index::index_relative_path;
+use ctx_lib::index::{index_files, index_relative_path};
 use ctx_lib::validate_path;
 use std::env;
 use tracing::{info, warn};
@@ -38,7 +38,7 @@ async fn main() -> Result<(), Error> {
                     "The parsered relative path for indexing {:?}",
                     relative_path
                 );
-
+                let _ = index_files(&dir_path);
                 info!("start the indexing of the {:?}", relative_path);
             } else {
                 warn!("The .chitra not found please create it using ctx init");

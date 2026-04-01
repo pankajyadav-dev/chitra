@@ -261,6 +261,7 @@ dependencies = [
  "anyhow",
  "tokio",
  "tracing",
+ "walkdir",
 ]
 
 [[package]]
