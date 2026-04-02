@@ -1,4 +1,5 @@
 use anyhow::{Error, anyhow};
+use globset::{Glob, GlobSetBuilder};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tracing::info;
@@ -36,7 +37,70 @@ pub async fn index_relative_path<P: AsRef<Path>>(
     Ok(relative_path)
 }
 
-pub fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<(), Error> {
+pub async fn read_chitra_ignore_files<P: AsRef<Path>>(
+    chitra_path: P,
+) -> Result<Vec<String>, Error> {
+    let chitra_path = chitra_path.as_ref().join("./.chitraignore");
+    let ignore_file = fs::read_to_string(&chitra_path).await?;
+    let ignore_files = ignore_file
+        .lines()
+        .map(|e| e.trim())
+        .filter(|l| !l.is_empty())
+        .map(|line| line.to_string())
+        .collect();
+    info!("Ignore file to protect from indexing {:?}", ignore_files);
+    Ok(ignore_files)
+}
+
+pub async fn filter_index_files<P: AsRef<Path>>(
+    chitra_dir: P,
+    paths: Vec<PathBuf>,
+) -> Result<Vec<PathBuf>, Error> {
+    let chitra_dir = chitra_dir.as_ref();
+
+    let ignore_path = read_chitra_ignore_files(&chitra_dir)
+        .await
+        .unwrap_or_default();
+    // let ignore_path = match read_chitra_ignore_files(&chitra_dir).await {
+    //     Ok(p) => p,
+    //     Err(_) => Vec::new(),
+    // };
+    if ignore_path.is_empty() {
+        return Ok(paths);
+    }
+
+    let mut builder = GlobSetBuilder::new();
+
+    for pattern in ignore_path {
+        match Glob::new(&pattern) {
+            Ok(glob) => {
+                builder.add(glob);
+            }
+            Err(e) => {
+                info!("Invalid glob pattern {} - {}", pattern, e);
+            }
+        };
+    }
+
+    let glob_set = builder
+        .build()
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+    info!("glob set {:?}", glob_set);
+    let mut filter_path = Vec::new();
+    for path in paths {
+        let relative_path = path.strip_prefix(chitra_dir).unwrap_or(&path);
+        info!("relative_path {:?}", relative_path);
+        if !glob_set.is_match(relative_path) {
+            filter_path.push(path);
+        } else {
+            info!("Ignoreing the file {:?}", &path);
+        }
+    }
+
+    Ok(filter_path)
+}
+
+pub fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<Vec<PathBuf>, Error> {
     let dir_path = dir_path.as_ref();
     let files: Vec<PathBuf> = WalkDir::new(dir_path)
         .into_iter()
@@ -45,5 +109,5 @@ pub fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<(), Error> {
         .map(|e| e.into_path())
         .collect();
     info!("the files in the curr dir to index {:?}", files);
-    Ok(())
+    Ok(files)
 }
