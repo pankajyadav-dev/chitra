@@ -45,26 +45,27 @@ pub async fn read_chitra_ignore_files<P: AsRef<Path>>(
     let ignore_files = ignore_file
         .lines()
         .map(|e| e.trim())
+        .map(|e| e.trim_end_matches("/"))
+        // .map(|e| e.trim_end_matches("*"))
         .filter(|l| !l.is_empty())
+        .filter(|l| !l.starts_with("#"))
         .map(|line| line.to_string())
         .collect();
-    info!("Ignore file to protect from indexing {:?}", ignore_files);
     Ok(ignore_files)
 }
 
 pub async fn filter_index_files<P: AsRef<Path>>(
     chitra_dir: P,
-    paths: Vec<PathBuf>,
+    dir_to_index: P,
 ) -> Result<Vec<PathBuf>, Error> {
     let chitra_dir = chitra_dir.as_ref();
+    let dir_to_index = dir_to_index.as_ref();
+
+    let paths = index_files(dir_to_index)?;
 
     let ignore_path = read_chitra_ignore_files(&chitra_dir)
         .await
         .unwrap_or_default();
-    // let ignore_path = match read_chitra_ignore_files(&chitra_dir).await {
-    //     Ok(p) => p,
-    //     Err(_) => Vec::new(),
-    // };
     if ignore_path.is_empty() {
         return Ok(paths);
     }
@@ -85,12 +86,29 @@ pub async fn filter_index_files<P: AsRef<Path>>(
     let glob_set = builder
         .build()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
-    info!("glob set {:?}", glob_set);
+
     let mut filter_path = Vec::new();
+
     for path in paths {
         let relative_path = path.strip_prefix(chitra_dir).unwrap_or(&path);
-        info!("relative_path {:?}", relative_path);
-        if !glob_set.is_match(relative_path) {
+
+        let is_ignored = relative_path.ancestors().any(|ancestor| {
+            if ancestor.as_os_str().is_empty() {
+                return false;
+            }
+            if glob_set.is_match(ancestor) {
+                return true;
+            }
+            if let Some(name) = ancestor.file_name()
+                && glob_set.is_match(name)
+            {
+                return true;
+            }
+
+            false
+        });
+
+        if !is_ignored {
             filter_path.push(path);
         } else {
             info!("Ignoreing the file {:?}", &path);
@@ -100,7 +118,7 @@ pub async fn filter_index_files<P: AsRef<Path>>(
     Ok(filter_path)
 }
 
-pub fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<Vec<PathBuf>, Error> {
+fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<Vec<PathBuf>, Error> {
     let dir_path = dir_path.as_ref();
     let files: Vec<PathBuf> = WalkDir::new(dir_path)
         .into_iter()
@@ -108,6 +126,5 @@ pub fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<Vec<PathBuf>, Error> {
         .filter(|e| e.file_type().is_file())
         .map(|e| e.into_path())
         .collect();
-    info!("the files in the curr dir to index {:?}", files);
     Ok(files)
 }
