@@ -28,7 +28,7 @@ impl TreesitterManager {
             "css" => Some("css"),
             "sql" => Some("sql"),
             "Dockerfile" => Some("dockerfile"),
-            ".md" => Some("markdown"),
+            "md" => Some("markdown"),
             _ => None,
         }
     }
