@@ -9,4 +9,5 @@ anyhow.workspace = true
 globset.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+treesitter_lib.workspace = true
 walkdir.workspace = true

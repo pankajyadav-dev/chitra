@@ -8,8 +8,8 @@ pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
     let project_dir =
         ProjectDirs::from("com", "Chitra", "ctx").context("Failed to find valid project dir")?;
 
-    let parser_dir = project_dir.config_dir().join("parser");
-    info!("The root dir to store parser binary {:?}", parser_dir);
+    let parser_dir = project_dir.config_dir().join("treesitter_binary");
+    // info!("The root dir to store parser binary {:?}", parser_dir);
     if !parser_dir.exists() {
         fs::create_dir_all(&parser_dir)
             .await
@@ -20,8 +20,8 @@ pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
 }
 
 pub async fn download_ctx_parser<P: AsRef<Path>>(
-    language: &str,
     target_dir: P,
+    language: &str,
 ) -> Result<PathBuf, Error> {
     let target_dir = target_dir.as_ref();
 
@@ -55,6 +55,6 @@ pub async fn download_ctx_parser<P: AsRef<Path>>(
     fs::write(&file_path, bytes)
         .await
         .context(format!("Failed to create the tree-sitter-{}", language))?;
-
+    info!("Downloadinng complete of tree_sitter_{:?}", language);
     Ok(file_path)
 }
