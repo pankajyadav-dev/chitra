@@ -109,7 +109,8 @@ pub async fn filter_index_files<P: AsRef<Path>>(
         });
 
         if !is_ignored {
-            filter_path.push(path);
+            let parsed_path = get_chitra_relative_path(chitra_dir, &path).await?;
+            filter_path.push(parsed_path);
         } else {
             info!("Ignoreing the file {:?}", &path);
         }
