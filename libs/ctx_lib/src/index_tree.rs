@@ -12,3 +12,11 @@ pub async fn create_index_tree<P: AsRef<Path>>(
     info!("File path which we have to index {:?}", file_paths);
     Ok(())
 }
+
+
+
+
+
+// pub async fn check_treesitter_binary(){
+//
+// }
