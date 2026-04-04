@@ -9,7 +9,6 @@ pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
         ProjectDirs::from("com", "Chitra", "ctx").context("Failed to find valid project dir")?;
 
     let parser_dir = project_dir.config_dir().join("treesitter_binary");
-    // info!("The root dir to store parser binary {:?}", parser_dir);
     if !parser_dir.exists() {
         fs::create_dir_all(&parser_dir)
             .await
