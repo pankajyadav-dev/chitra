@@ -1,4 +1,5 @@
 use anyhow::{Context, Error};
+use core::str;
 use std::sync::Arc;
 use std::{
     collections::HashSet,
@@ -24,7 +25,7 @@ pub async fn create_index_tree<P: AsRef<Path>>(
             ))?;
     }
     if !chitra_index_file_path.exists() {
-        tokio::fs::write(&chitra_index_file_path, b"{}")
+        tokio::fs::write(&chitra_index_file_path, b"{}\n")
             .await
             .context("Failed to create the index.json")?;
         info!("index.json file is created");
@@ -38,30 +39,54 @@ pub async fn create_index_tree<P: AsRef<Path>>(
         ts_manager.bin_dir
     );
 
-    let mut required_language = HashSet::new();
-    for file in &file_paths {
-        if let Some(ext) = file.extension().and_then(|ex| ex.to_str())
-            && let Some(lang) = TreesitterManager::get_language_from_extension(ext)
-        {
-            required_language.insert(lang);
-        }
-    }
+    let required_language = get_file_extension(&file_paths)?;
+
     info!("Required binary for language {:?}", required_language);
 
-    let mut set = JoinSet::new();
-    for lang in required_language {
-        let manager_clone = Arc::clone(&ts_manager);
-        set.spawn(async move { manager_clone.ensure_treesitter_bianry(lang).await });
-    }
-
-    while let Some(result) = set.join_next().await {
-        let lang_file_path = result??;
-        info!("Tree sitter bianry path is {:?}", lang_file_path);
-    }
+    check_treesitter_binary_exist(required_language, ts_manager).await?;
 
     Ok(())
 }
 
-// pub async fn check_treesitter_binary(){
-//
-// }
+async fn check_treesitter_binary_exist(
+    required_binary_lang: HashSet<&'static str>,
+    tree_manager: Arc<TreesitterManager>,
+) -> Result<(), Error> {
+    let mut set = JoinSet::new();
+    for lang in required_binary_lang {
+        let manager_clone = Arc::clone(&tree_manager);
+        set.spawn(async move { manager_clone.ensure_treesitter_binary(lang).await });
+    }
+    while let Some(result) = set.join_next().await {
+        let lang_file_path = result??;
+        info!("tree sitter binary path is {:?}", lang_file_path);
+    }
+    Ok(())
+}
+
+fn get_file_extension(file_paths: &[PathBuf]) -> Result<HashSet<&'static str>, Error> {
+    let mut required_language = HashSet::new();
+    for file in file_paths {
+        let mut detected_lang = None;
+        if let Some(lang) = file.extension().and_then(|e| e.to_str()) {
+            detected_lang = TreesitterManager::get_language_from_extension(lang);
+        }
+
+        if detected_lang.is_none()
+            && let Some(file_name) = file.file_name().and_then(|name| name.to_str())
+        {
+            let name_lower_case = file_name.to_lowercase();
+            detected_lang = match name_lower_case.as_str() {
+                "dockerfile" => Some("dockerfile"),
+                "makefile" => Some("make"),
+                name if name.starts_with("dockerfile") => Some("dockerfile"),
+                _ => None,
+            }
+        }
+
+        if let Some(lang) = detected_lang {
+            required_language.insert(lang);
+        }
+    }
+    Ok(required_language)
+}

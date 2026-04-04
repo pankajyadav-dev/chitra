@@ -33,7 +33,7 @@ impl TreesitterManager {
         }
     }
 
-    pub async fn ensure_treesitter_bianry(&self, lang: &str) -> Result<PathBuf, Error> {
+    pub async fn ensure_treesitter_binary(&self, lang: &str) -> Result<PathBuf, Error> {
         let binary_path = download_ctx_parser(&self.bin_dir, lang).await?;
         Ok(binary_path)
     }
