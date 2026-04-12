@@ -34,6 +34,9 @@ async fn main() -> Result<(), Error> {
                 return Ok(());
             }
         }
+        Command::Chat => {
+            info!("Chat start");
+        }
     }
     Ok(())
 }

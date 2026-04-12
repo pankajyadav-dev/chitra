@@ -5,4 +5,5 @@ use std::path::PathBuf;
 pub enum Command {
     Init { path: Option<PathBuf> },
     Index { path: Option<PathBuf> },
+    Chat,
 }
