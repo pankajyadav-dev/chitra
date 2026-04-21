@@ -15,7 +15,7 @@ pub async fn create_index_tree<P: AsRef<Path>>(
     file_paths: Vec<PathBuf>,
 ) -> Result<(), Error> {
     let chitra_path = chitra_path.as_ref();
-    let chitra_index_file_path = chitra_path.join(".chitra/index/index.json");
+    let chitra_index_file_path = chitra_path.join(".ctx/index/index.json");
     if let Some(parent_dir) = chitra_index_file_path.parent() {
         tokio::fs::create_dir_all(parent_dir)
             .await

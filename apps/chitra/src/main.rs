@@ -21,16 +21,16 @@ async fn main() -> Result<(), Error> {
             info!("Dir path {:?}", dir_path);
             let ctx_dir_path = root_dir_path.join(dir_path);
             init_chitra(ctx_dir_path).await?;
-            info!(".chitra is init completed successfully");
+            info!("ctx created successfully");
         }
         Command::Index { path } => {
             let dir_path = root_dir_path.join(validate_path(path));
             let chitra_path = check_chitra_dir(&dir_path).await;
             if let Some(c) = chitra_path {
-                let filter_paths = filter_index_files(&c, &dir_path).await?;
-                create_index_tree(&c, filter_paths).await?;
+                let filtered_paths = filter_index_files(&c, &dir_path).await?;
+                create_index_tree(&c, filtered_paths).await?;
             } else {
-                warn!("The .chitra not found please create it using ctx init");
+                warn!("The ctx not found please create it using 'ctx init'");
                 return Ok(());
             }
         }

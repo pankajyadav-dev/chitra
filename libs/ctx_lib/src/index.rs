@@ -40,7 +40,7 @@ pub async fn index_relative_path<P: AsRef<Path>>(
 pub async fn read_chitra_ignore_files<P: AsRef<Path>>(
     chitra_path: P,
 ) -> Result<Vec<String>, Error> {
-    let chitra_path = chitra_path.as_ref().join("./.chitraignore");
+    let chitra_path = chitra_path.as_ref().join("./.ctxignore");
     let ignore_file = fs::read_to_string(&chitra_path).await?;
     let ignore_files = ignore_file
         .lines()

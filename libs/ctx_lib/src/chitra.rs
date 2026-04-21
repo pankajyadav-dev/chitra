@@ -16,7 +16,7 @@ pub async fn init_chitra<P: AsRef<Path>>(curr_dir: P) -> Result<(), Error> {
 pub async fn check_chitra_dir<P: AsRef<Path>>(curr_dir: P) -> Option<PathBuf> {
     let curr_dir = curr_dir.as_ref();
     for ancestor in curr_dir.ancestors() {
-        let target_dir = ancestor.join(".chitra");
+        let target_dir = ancestor.join(".ctx");
         if let Ok(metadata) = fs::metadata(&target_dir).await
             && metadata.is_dir()
         {
@@ -28,8 +28,8 @@ pub async fn check_chitra_dir<P: AsRef<Path>>(curr_dir: P) -> Option<PathBuf> {
 
 async fn create_chitra_dir<P: AsRef<Path>>(curr_dir: P) -> Result<PathBuf, Error> {
     let root_dir_path = curr_dir.as_ref();
-    let chitra_dir_path = root_dir_path.join(".chitra");
-    let chitra_ignore_dir_path = root_dir_path.join(".chitraignore");
+    let chitra_dir_path = root_dir_path.join(".ctx");
+    let chitra_ignore_dir_path = root_dir_path.join(".ctxignore");
     fs::create_dir(&chitra_dir_path).await?;
     fs::File::create(&chitra_ignore_dir_path).await?;
     Ok(chitra_dir_path)
