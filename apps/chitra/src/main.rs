@@ -29,6 +29,9 @@ async fn main() -> Result<(), Error> {
             if let Some(c) = chitra_path {
                 let filtered_paths = filter_index_files(&c, &dir_path).await?;
                 create_index_tree(&c, filtered_paths).await?;
+                // todo:
+                // implement the treesitter logic from the vector of the filtered files from the
+                // filtered_paths  as we implemented the binary logic for now
             } else {
                 warn!("The ctx not found please create it using 'ctx init'");
                 return Ok(());
