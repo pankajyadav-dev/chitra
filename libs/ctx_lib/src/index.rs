@@ -5,15 +5,19 @@ use tokio::fs;
 use tracing::info;
 use walkdir::WalkDir;
 
+
+// Fn to get the relative path of the current directory with respect to the chitra root directory
 async fn get_chitra_relative_path<P: AsRef<Path>>(
     base_dir: P,
     curr_dir: P,
 ) -> Result<PathBuf, Error> {
     let base_dir = base_dir.as_ref();
     let curr_dir = curr_dir.as_ref();
-
+    // Get the canonical path of the root directory and the current directory
     let cononical_root = fs::canonicalize(base_dir).await?;
     let cononical_curr_dir = fs::canonicalize(curr_dir).await?;
+    
+    // Strip the root directory from the current directory to get the relative path
     match cononical_curr_dir.strip_prefix(&cononical_root) {
         Ok(relative_path) => Ok(relative_path.to_path_buf()),
         Err(e) => Err(anyhow!(
@@ -23,25 +27,29 @@ async fn get_chitra_relative_path<P: AsRef<Path>>(
     }
 }
 
+// Fn to get the relative path of the current directory with respect to the chitra root directory
 pub async fn index_relative_path<P: AsRef<Path>>(
     base_dir: P,
     curr_dir: P,
 ) -> Result<PathBuf, Error> {
     let base_dir = base_dir.as_ref();
     let curr_dir = curr_dir.as_ref();
+    // Get the relative path of the current directory with respect to the chitra root directory
     let relative_path = get_chitra_relative_path(base_dir, curr_dir).await?;
     if relative_path.as_os_str().is_empty() {
         return Ok(PathBuf::from("."));
     }
-
+    // Return the relative path of the current directory with respect to the chitra root directory
     Ok(relative_path)
 }
 
+// Fn to read the chitra ignore files
 pub async fn read_chitra_ignore_files<P: AsRef<Path>>(
     chitra_path: P,
 ) -> Result<Vec<String>, Error> {
     let chitra_path = chitra_path.as_ref().join("./.ctxignore");
     let ignore_file = fs::read_to_string(&chitra_path).await?;
+    // Parse the ignore file into a list of ignore patterns
     let ignore_files = ignore_file
         .lines()
         .map(|e| e.trim())
@@ -51,25 +59,31 @@ pub async fn read_chitra_ignore_files<P: AsRef<Path>>(
         .filter(|l| !l.starts_with("#"))
         .map(|line| line.to_string())
         .collect();
+    // Return the list of ignore patterns
     Ok(ignore_files)
 }
 
+
+// Filter the index files based on the ignore patterns
 pub async fn filter_index_files<P: AsRef<Path>>(
     chitra_dir: P,
     dir_to_index: P,
 ) -> Result<Vec<PathBuf>, Error> {
     let chitra_dir = chitra_dir.as_ref();
     let dir_to_index = dir_to_index.as_ref();
-
+    // Get the list of files to index from the directory path
     let paths = index_files(dir_to_index)?;
-
+    
+    // Read the ignore patterns from the .ctxignore file
     let ignore_path = read_chitra_ignore_files(&chitra_dir)
         .await
         .unwrap_or_default();
     if ignore_path.is_empty() {
         return Ok(paths);
     }
-
+    
+    
+    // Build the glob set from the ignore patterns
     let mut builder = GlobSetBuilder::new();
 
     for pattern in ignore_path {
@@ -87,6 +101,7 @@ pub async fn filter_index_files<P: AsRef<Path>>(
         .build()
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
 
+    // Filter out ignored paths
     let mut filter_path = Vec::new();
 
     for path in paths {
@@ -109,16 +124,20 @@ pub async fn filter_index_files<P: AsRef<Path>>(
         });
 
         if !is_ignored {
+            // Add the path to the filter list if it is not ignored
             let parsed_path = get_chitra_relative_path(chitra_dir, &path).await?;
             filter_path.push(parsed_path);
-        } else {
-            info!("Ignoreing the file {:?}", &path);
         }
+        // } else {
+        //     info!("Ignoreing the file {:?}", &path);
+        // }
     }
 
     Ok(filter_path)
 }
 
+
+// Recursively index files in the given directory
 fn index_files<P: AsRef<Path>>(dir_path: P) -> Result<Vec<PathBuf>, Error> {
     let dir_path = dir_path.as_ref();
     let files: Vec<PathBuf> = WalkDir::new(dir_path)

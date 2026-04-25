@@ -13,23 +13,26 @@ async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt::init();
     let args = Cli::parse();
     info!("chitra, here how can i help you today");
-    info!("{:?}", args);
+    // info!("{:?}", args);
     let root_dir_path = env::current_dir()?;
     match args.cmd {
+        // Initializes the chitra context in the given directory
         Command::Init { path } => {
+            
             let dir_path = validate_path(path);
-            info!("Dir path {:?}", dir_path);
+            // info!("Dir path {:?}", dir_path);
             let ctx_dir_path = root_dir_path.join(dir_path);
             init_chitra(ctx_dir_path).await?;
             info!("ctx created successfully");
         }
+        // Indexes the files in the given directory
         Command::Index { path } => {
             let dir_path = root_dir_path.join(validate_path(path));
             let chitra_path = check_chitra_dir(&dir_path).await;
             if let Some(c) = chitra_path {
                 let filtered_paths = filter_index_files(&c, &dir_path).await?;
                 create_index_tree(&c, filtered_paths).await?;
-                // todo:
+                // Todo:
                 // implement the treesitter logic from the vector of the filtered files from the
                 // filtered_paths  as we implemented the binary logic for now
             } else {
@@ -37,6 +40,11 @@ async fn main() -> Result<(), Error> {
                 return Ok(());
             }
         }
+        
+        // TODO:
+        // - Implement the Chat Funtionality with the model
+        
+        // Start the chat dialog box for the current ctx context
         Command::Chat => {
             info!("Chat start");
         }

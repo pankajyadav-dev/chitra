@@ -10,6 +10,13 @@ use tracing::info;
 
 use crate::treesittermanager::TreesitterManager;
 
+// Todo:
+// - Implement the tree sitter logic here
+
+/*
+Creates the index tree for the given file paths and chitra root path
+Downloads the required binary for the file paths if not exist
+*/
 pub async fn create_index_tree<P: AsRef<Path>>(
     chitra_path: P,
     file_paths: Vec<PathBuf>,
@@ -30,33 +37,38 @@ pub async fn create_index_tree<P: AsRef<Path>>(
             .context("Failed to create the index.json")?;
         info!("index.json file is created");
     }
-    info!("Chitra index file path {:?}", chitra_index_file_path);
-    info!("File path which we have to index {:?}", file_paths);
+    // info!("Chitra index file path {:?}", chitra_index_file_path);
+    // info!("File path which we have to index {:?}", file_paths);
 
     let ts_manager = Arc::new(TreesitterManager::new().await?);
-    info!(
-        "the binary cofig path of os filesystem {:?}",
-        ts_manager.bin_dir
-    );
+    // info!(
+    //     "the binary cofig path of os filesystem {:?}",
+    //     ts_manager.bin_dir
+    // );
 
     let required_language = get_file_extension(&file_paths)?;
 
-    info!("Required binary for language {:?}", required_language);
+    // info!("Required binary for language {:?}", required_language);
 
+    // check for the treesitter bianry if they exist or not. IF not the download them
     check_treesitter_binary_exist(required_language, ts_manager).await?;
 
     Ok(())
 }
 
+// Check if the required treesitter binary exists, and if not, download it.
 async fn check_treesitter_binary_exist(
     required_binary_lang: HashSet<&'static str>,
     tree_manager: Arc<TreesitterManager>,
 ) -> Result<(), Error> {
+    // used to run tasks in parallel to download the binary parallely to improve the user experience
     let mut set = JoinSet::new();
     for lang in required_binary_lang {
         let manager_clone = Arc::clone(&tree_manager);
         set.spawn(async move { manager_clone.ensure_treesitter_binary(lang).await });
     }
+
+    // wait for the tasks to complete parallely
     while let Some(result) = set.join_next().await {
         let lang_file_path = result??;
         info!("tree sitter binary path is {:?}", lang_file_path);
@@ -64,6 +76,8 @@ async fn check_treesitter_binary_exist(
     Ok(())
 }
 
+// Fn to get the file extension from the vector of the file paths and handle the cases where file donot have extension
+// Only supports file without extension only (DockerFile and makefile)
 fn get_file_extension(file_paths: &[PathBuf]) -> Result<HashSet<&'static str>, Error> {
     let mut required_language = HashSet::new();
     for file in file_paths {
