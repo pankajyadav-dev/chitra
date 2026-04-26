@@ -4,11 +4,15 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 use tracing::info;
 
+// Returns the path to the Treesitter binary directory 
+// This automatically detech the operating system and create the .ctx folder according to Operating system configuration
 pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
+    // Detect the operating system and create the .ctx folder accordingly
     let project_dir =
         ProjectDirs::from("com", "Chitra", "ctx").context("Failed to find valid project dir")?;
 
     let parser_dir = project_dir.config_dir().join("treesitter_binary");
+    // Create the .ctx folder if it doesn't exist
     if !parser_dir.exists() {
         fs::create_dir_all(&parser_dir)
             .await
@@ -18,12 +22,15 @@ pub async fn get_ctx_parser_dir() -> Result<PathBuf, Error> {
     Ok(parser_dir)
 }
 
+
+// Downloads the Treesitter binary for the given language and saves it to the target directory
 pub async fn download_ctx_parser<P: AsRef<Path>>(
     target_dir: P,
     language: &str,
 ) -> Result<PathBuf, Error> {
     let target_dir = target_dir.as_ref();
 
+    // Determine the file extension based on the operating system
     let extension = if cfg!(target_os = "windows") {
         "dll"
     } else if cfg!(target_os = "macos") {
@@ -44,11 +51,13 @@ pub async fn download_ctx_parser<P: AsRef<Path>>(
         "https://github.com/techpankajyadav/tree-sitter/releases/download/latest/tree-sitter-{}.{}",
         language, extension
     );
+    /* 
     info!("the tree start downloading and the url is {}", url);
     info!(
         "the tree start downloading and the file path is {:?}",
         &file_path
     );
+    */
     let response = reqwest::get(&url).await?;
     let bytes = response.bytes().await?;
     fs::write(&file_path, bytes)
